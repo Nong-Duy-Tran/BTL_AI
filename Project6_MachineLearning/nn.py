@@ -53,8 +53,7 @@ class Parameter(DataNode):
         assert isinstance(multiplier, (int, float)), (
             "Multiplier must be a Python scalar, instead has type {!r}".format(
                 type(multiplier).__name__))
-        print(direction.data, multiplier)
-        self.data +=  direction.data * multiplier
+        self.data += multiplier * direction.data
         assert np.all(np.isfinite(self.data)), (
             "Parameter contains NaN or infinity after update, cannot continue")
 
