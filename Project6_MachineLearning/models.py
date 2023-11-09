@@ -226,7 +226,12 @@ class LanguageIDModel(object):
 
         # Initialize your model parameters here
         "*** YOUR CODE HERE ***"
-
+        self.hidden_size = 400
+        self.batch_size = 10
+        self.Wx = nn.Parameter(self.num_chars,self.hidden_size)
+        self.Wh = nn.Parameter(self.hidden_size,self.hidden_size)
+        self.last_W = nn.Parameter(self.hidden_size,5)
+        self.lr = 0.019
     def run(self, xs):
         """
         Runs the model for a batch of examples.
@@ -257,7 +262,13 @@ class LanguageIDModel(object):
                 (also called logits)
         """
         "*** YOUR CODE HERE ***"
-
+        z = nn.Linear(xs[0],self.Wx)
+        h = nn.ReLU(z)
+        for x in xs:
+            z = nn.Add(nn.Linear(x,self.Wx),nn.Linear(h,self.Wh))
+            h = nn.ReLU(z)
+        return nn.Linear(h,self.last_W)
+    
     def get_loss(self, xs, y):
         """
         Computes the loss for a batch of examples.
@@ -273,9 +284,17 @@ class LanguageIDModel(object):
         Returns: a loss node
         """
         "*** YOUR CODE HERE ***"
+        return nn.SoftmaxLoss(self.run(xs),y)
 
     def train(self, dataset):
         """
         Trains the model.
         """
         "*** YOUR CODE HERE ***"
+        while dataset.get_validation_accuracy() < 0.85:
+            for x, y in dataset.iterate_once(self.batch_size):
+                loss = self.get_loss(x, y)
+                gd_Wx,gd_Wh,gd_last_W = nn.gradients(loss,[self.Wx,self.Wh,self.last_W])
+                self.Wx.update(gd_Wx, -self.lr)
+                self.Wh.update(gd_Wh, -self.lr)
+                self.last_W.update(gd_last_W, - self.lr)
