@@ -37,7 +37,7 @@ class PerceptronModel(object):
         """
         "*** YOUR CODE HERE ***"
         #print(np.sign(nn.as_scalar(self.run(x))))
-        if (np.sign(nn.as_scalar(self.run(x))) >= 0):
+        if(nn.as_scalar(self.run(x)) >= 0):
             return 1
         else:
             return -1
@@ -48,10 +48,15 @@ class PerceptronModel(object):
         """
         "*** YOUR CODE HERE ***"
         batch_size = 1
-        for x, y in dataset.iterate_once(batch_size):
-            #print(self.get_prediction(self.run(x)))
-            #if(self.get_prediction(self.run(x)) != nn.as_scalar(y)):
-            self.w.update(x, nn.as_scalar(y))
+        n_iter = 100
+        for i in range(n_iter):
+            count_miss = 0
+            for x,y in dataset.iterate_once(batch_size):
+                if(self.get_prediction(x) != nn.as_scalar(y)):
+                    count_miss += 1
+                    self.get_weights().update(x,nn.as_scalar(y))
+            if(count_miss == 0):
+                break
             
 
 class RegressionModel(object):
