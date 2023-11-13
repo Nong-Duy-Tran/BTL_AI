@@ -343,7 +343,12 @@ def pacphysicsAxioms(t: int, all_coords: List[Tuple], non_outer_wall_coords: Lis
     pacphysics_sentences = []
 
     "*** BEGIN YOUR CODE HERE ***"
-    pacphysics_sentences
+    posible_location = []
+    for x, y in all_coords:
+        pacphysics_sentences.append(PropSymbolExpr(wall_str,x,y) >> PropSymbolExpr(pacman_str,x,y,time=t))
+        
+        if (x, y) in non_outer_wall_coords:
+            posible_location.append(PropSymbolExpr(pacman_str, x,y,time = t))
     "*** END YOUR CODE HERE ***"
 
     return conjoin(pacphysics_sentences)
