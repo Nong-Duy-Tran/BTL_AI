@@ -358,6 +358,11 @@ def pacphysicsAxioms(t: int, all_coords: List[Tuple], non_outer_wall_coords: Lis
         one_action_only.append(PropSymbolExpr(direction, time=t))
     pacphysics_sentences.append(exactlyOne(one_action_only))
 
+    if sensorModel is not None:
+        pacphysics_sentences.append(sensorModel(t, non_outer_wall_coords))
+    
+    if successorAxioms is not None:
+        pacphysics_sentences.append(successorAxioms(t, walls_grid, non_outer_wall_coords))
 
     "*** END YOUR CODE HERE ***"
 
@@ -392,7 +397,7 @@ def checkLocationSatisfiability(x1_y1: Tuple[int, int], x0_y0: Tuple[int, int], 
     KB.append(conjoin(map_sent))
 
     "*** BEGIN YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    
     "*** END YOUR CODE HERE ***"
 
 #______________________________________________________________________________
