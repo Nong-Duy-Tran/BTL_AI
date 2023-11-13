@@ -349,6 +349,16 @@ def pacphysicsAxioms(t: int, all_coords: List[Tuple], non_outer_wall_coords: Lis
         
         if (x, y) in non_outer_wall_coords:
             posible_location.append(PropSymbolExpr(pacman_str, x,y,time = t))
+    
+    pacphysics_sentences.append(exactlyOne(posible_location))
+
+    one_action_only = []
+
+    for direction in DIRECTIONS:
+        one_action_only.append(PropSymbolExpr(direction, time=t))
+    pacphysics_sentences.append(exactlyOne(one_action_only))
+
+
     "*** END YOUR CODE HERE ***"
 
     return conjoin(pacphysics_sentences)
@@ -544,18 +554,30 @@ def sensorAxioms(t: int, non_outer_wall_coords: List[Tuple[int, int]]) -> Expr:
     all_percept_exprs = []
     combo_var_def_exprs = []
     for direction in DIRECTIONS:
-        percept_exprs = []
+        percept_exprs = [] # Lưu ý: Biến này được làm mới qua mỗi vòng
         dx, dy = DIR_TO_DXDY_MAP[direction]
         for x, y in non_outer_wall_coords:
             combo_var = PropSymbolExpr(pacman_wall_str, x, y, x + dx, y + dy, time=t)
+            # Ví dụ về giá trị của combo_var: PWALL[0,0,0,1]_1
+            # Mệnh đề trên biểu thị pacman ở vị trí (0,0) tại thời điểm time = 1, tường ở vị trí (0,1)
             percept_exprs.append(combo_var)
+
+
             combo_var_def_exprs.append(combo_var % (
                 PropSymbolExpr(pacman_str, x, y, time=t) & PropSymbolExpr(wall_str, x + dx, y + dy)))
+            # Mệnh đề trên biểu thị: mệnh đề combo_var tương đương với 
+            # pacman ở vị trí (x,y) tại thời điểm t hội với mệnh đề tường ở vị trí (x+dx, y+dy)
 
         percept_unit_clause = PropSymbolExpr(blocked_str_map[direction], time = t)
+        # Ví dụ về giá trị của percept_unit_clause: NORTH_BLOCKED_1
+        # Mệnh đề trên biểu thị phía Bắc bị chặn tại thời điểm 1
+
         all_percept_exprs.append(percept_unit_clause % disjoin(percept_exprs))
+        # List chứa các mệnh đề tương đương, ví dụ như
+        # Phía Bắc bị chặn tại thời điểm 1 tương đương với một trong các đường đi của pacman bị chặn lại bởi tường
 
     return conjoin(all_percept_exprs + combo_var_def_exprs)
+    # Trả về chuẩn tắc hội
 
 
 def fourBitPerceptRules(t: int, percepts: List) -> Expr:
