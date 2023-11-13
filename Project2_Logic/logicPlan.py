@@ -106,7 +106,9 @@ def findModel(sentence: Expr) -> Dict[Expr, bool]:
     model if one exists. Otherwise, returns False.
     """
     cnf_sentence = to_cnf(sentence)
-    return pycoSAT(cnf_sentence)
+    return pycoSAT(cnf_sentence) 
+    # Note không quên, bản chất là để kiểm tra xem có tồn tại bất kì giá trị nào thỏa mãn mệnh đề không
+    # trả về giá trị dạng Dict nếu có, trả về False nếu không tồn tại
 
 def findModelUnderstandingCheck() -> Dict[Expr, bool]:
     """Returns the result of findModel(Expr('a')) if lower cased expressions were allowed.
@@ -223,7 +225,7 @@ def pacmanSuccessorAxiomSingle(x: int, y: int, time: int, walls_grid: List[List[
     possible_causes: List[Expr] = [] # enumerate all possible causes for P[x,y]_t
     # the if statements give a small performance boost and are required for q4 and q5 correctness
     
-    if walls_grid[x][y+1] != 1:
+    if walls_grid[x][y+1] != 1: # Nếu không có tường ở vị trí (x, y+1)
         possible_causes.append( PropSymbolExpr(pacman_str, x, y+1, time=last)
                             & PropSymbolExpr('South', time=last)) 
         
@@ -245,8 +247,8 @@ def pacmanSuccessorAxiomSingle(x: int, y: int, time: int, walls_grid: List[List[
     
     "*** BEGIN YOUR CODE HERE ***"
     return PropSymbolExpr(pacman_str, x, y, time=now) % disjoin(possible_causes)
-    # Trả về mệnh đề biểu thị pacman ở vị trí (x,y) thời điểm bây giờ
-    # khi và chỉ khi pacman ở một trong các tọa độ trên và có hướng đi tương ứng
+    # Trả về mệnh đề biểu thị pacman ở vị trí (x,y) thời điểm bây giờ khi và chỉ khi
+    # pacman ở một trong các tọa độ trên từ trước và có hướng đi tương ứng
     "*** END YOUR CODE HERE ***"
 
 
@@ -343,14 +345,18 @@ def pacphysicsAxioms(t: int, all_coords: List[Tuple], non_outer_wall_coords: Lis
     pacphysics_sentences = []
 
     "*** BEGIN YOUR CODE HERE ***"
+    # Tập hợp những suy luận
+    # 1. Nếu tường ở đâu thì không có pacman
     posible_location = []
     for x, y in all_coords:
-        pacphysics_sentences.append(PropSymbolExpr(wall_str,x,y) >> PropSymbolExpr(pacman_str,x,y,time=t))
+        pacphysics_sentences.append(PropSymbolExpr(wall_str,x,y) >> ~PropSymbolExpr(pacman_str,x,y,time=t))
         
+        # 2. Xét vị trí nào pacman có thể, nhưng do pacma chỉ có thể ở 1 vị trí duy nhất nên ta dùng exactlyOne()
         if (x, y) in non_outer_wall_coords:
             posible_location.append(PropSymbolExpr(pacman_str, x,y,time = t))
     
     pacphysics_sentences.append(exactlyOne(posible_location))
+
 
     one_action_only = []
 
@@ -358,15 +364,19 @@ def pacphysicsAxioms(t: int, all_coords: List[Tuple], non_outer_wall_coords: Lis
         one_action_only.append(PropSymbolExpr(direction, time=t))
     pacphysics_sentences.append(exactlyOne(one_action_only))
 
+    # 3. Tập hợp những mệnh đề tương đương mà có thể nhận được khi quan sát pacman di chuyển
     if sensorModel is not None:
         pacphysics_sentences.append(sensorModel(t, non_outer_wall_coords))
     
-    if successorAxioms is not None:
+    # 4. Tập hợp những mệnh đề liên quan đến việc di chuyển của pacman
+    # ví dụ, pacman ở vị trí (3,3) khi mà chi khi nó ở (3,2) và đang đi về Bắc lúc đó
+    if successorAxioms is not None and t > 0: # Phải thêm t > 0 do cần kiểm tra tại thời điểm lúc trước
         pacphysics_sentences.append(successorAxioms(t, walls_grid, non_outer_wall_coords))
 
     "*** END YOUR CODE HERE ***"
 
     return conjoin(pacphysics_sentences)
+    # Bản chất của hàm là trả về tổng hợp các suy luận được yêu cầu cho cả map chơi
 
 
 def checkLocationSatisfiability(x1_y1: Tuple[int, int], x0_y0: Tuple[int, int], action0, action1, problem):
@@ -385,20 +395,48 @@ def checkLocationSatisfiability(x1_y1: Tuple[int, int], x0_y0: Tuple[int, int], 
         - a model where Pacman is not at (x1, y1) at time t = 1
     """
     walls_grid = problem.walls
+    # Gán giá trị cho biến là tọa độ của tường, Lưu ý là nếu là 1 thì là tường
+    # Đọc trong getWalls() của pacman.py
+
     walls_list = walls_grid.asList()
-    all_coords = list(itertools.product(range(problem.getWidth()+2), range(problem.getHeight()+2)))
+    # Có vẻ là chuyển thành dạng list
+
+    all_coords = list(itertools.product(range(problem.getWidth()+2), range(problem.getHeight()+2))) 
+    # Gán giá trị all_coords là tọa độ của toàn bộ sàn chơi TÍNH CẲ TƯỜNG
+    # +2 do trong getWidth() va getHeight() bị trừ đi 2 đơn vị do không tính tường
+
     non_outer_wall_coords = list(itertools.product(range(1, problem.getWidth()+1), range(1, problem.getHeight()+1)))
+    # Cái này thì là không tính tường nên bắt đầu từ 1 và chỉ +1 thôi
     KB = []
     x0, y0 = x0_y0
     x1, y1 = x1_y1
 
     # We know which coords are walls:
     map_sent = [PropSymbolExpr(wall_str, x, y) for x, y in walls_list]
+    # Tạo mệnh đề cho tường của cả map chơi
+
     KB.append(conjoin(map_sent))
 
     "*** BEGIN YOUR CODE HERE ***"
+    KB.append(pacphysicsAxioms(0, all_coords, non_outer_wall_coords, walls_grid, successorAxioms=allLegalSuccessorAxioms)) # Truyền vào hàm là do nó có dạng Callable
+    KB.append(pacphysicsAxioms(1, all_coords, non_outer_wall_coords, walls_grid, successorAxioms=allLegalSuccessorAxioms))
+
+    KB.append(PropSymbolExpr(pacman_str, x0, y0, time=0))
+
+    KB.append(PropSymbolExpr(action0, time=0))
+    KB.append(PropSymbolExpr(action1, time=1))
+
+    check = PropSymbolExpr(pacman_str, x1, y1, time=1)
+    # Do đề bài yêu cầu kiểm tra tại thời điểm time = 1 là thằng pacman có ở đấy không
+    # nên đặt luôn tại đấy
+
+    model1 = findModel(conjoin(KB) & check)
+    model2 = findModel(conjoin(KB) & ~check)
     
+    return model1, model2
+    # Bản chất của hàm là trả về tập giá trị (model) dạng Dict cho những suy luận mà ta được yêu cầu
     "*** END YOUR CODE HERE ***"
+
 
 #______________________________________________________________________________
 # QUESTION 4
@@ -654,11 +692,15 @@ def SLAMSensorAxioms(t: int, non_outer_wall_coords: List[Tuple[int, int]]) -> Ex
 def allLegalSuccessorAxioms(t: int, walls_grid: List[List], non_outer_wall_coords: List[Tuple[int, int]]) -> Expr:
     """walls_grid can be a 2D array of ints or bools."""
     all_xy_succ_axioms = []
-    for x, y in non_outer_wall_coords:
+    for x, y in non_outer_wall_coords: # Xét tọa độ của các điểm nằm BÊN TRONG map
+        
         xy_succ_axiom = pacmanSuccessorAxiomSingle(
             x, y, t, walls_grid)
+        # Đọc lại hàm pacmanSuccessorAxiomSingle
+
         if xy_succ_axiom:
             all_xy_succ_axioms.append(xy_succ_axiom)
+        # Nếu có tồn tại mệnh đề tương đương nhận được từ hàm trên sẽ được thêm vào trong list
     return conjoin(all_xy_succ_axioms)
 
 
