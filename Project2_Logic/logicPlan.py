@@ -477,10 +477,24 @@ def positionLogicPlan(problem) -> List:
         # 2.
         KB.append(exactlyOne([PropSymbolExpr(pacman_str, curr_loc[0], curr_loc[1], time = t) 
                               for curr_loc in non_wall_coords]))
-        # Viết convention cho ngắn, đại ý là kiểm tra vị trí duy nhất của pacman tại thời điểm t
+        # Viết comprehension cho ngắn, đại ý là kiểm tra vị trí duy nhất của pacman tại thời điểm t
 
-        # 3.
+        # 3. 
+        goal = PropSymbolExpr(pacman_str, xg, yg, time=t)
+        model = findModel(goal & conjoin(KB))
+        if (model):
+            return extractActionSequence(model, actions)
+        # Xét xem đến đích chưa, đến rồi thì trả về đường đi
         
+        # 4.
+        KB.append(exactlyOne([PropSymbolExpr(action, time = t) for action in actions]))
+        # pacman chỉ có một hành động tại một thời điểm
+
+        # 5.
+        for curr_loc in non_wall_coords:
+            KB.append(pacmanSuccessorAxiomSingle(curr_loc[0],curr_loc[1],t+1,walls_grid))
+        # Méo hiểu sao không dùng được comprehension :))))
+        # Đề bài yêu cầu xét hêt tất cả suy luận vị trí của tất cả các điểm mà của pacman ở trên bản đồ
 
 
     "*** END YOUR CODE HERE ***"
