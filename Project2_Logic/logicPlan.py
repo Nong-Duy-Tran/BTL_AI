@@ -451,18 +451,38 @@ def positionLogicPlan(problem) -> List:
     walls_grid = problem.walls
     width, height = problem.getWidth(), problem.getHeight()
     walls_list = walls_grid.asList()
+
+    # problem <- LocMapProblem (logicAgents.py) <- GameState (pacman.py)
     x0, y0 = problem.startState
+    # Vị trí khởi tạo
+
     xg, yg = problem.goal
+    # Vị trí đích
     
     # Get lists of possible locations (i.e. without walls) and possible actions
     all_coords = list(itertools.product(range(width + 2), 
             range(height + 2)))
+    
     non_wall_coords = [loc for loc in all_coords if loc not in walls_list]
+    # Các tọa độ không phải tường
+
     actions = [ 'North', 'South', 'East', 'West' ]
     KB = []
 
     "*** BEGIN YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    KB.append(logic.PropSymbolExpr(pacman_str,x0,y0,time= 0))
+    for t in range(50):
+        # 1.
+        print("time step =", t)
+        # 2.
+        KB.append(exactlyOne([PropSymbolExpr(pacman_str, curr_loc[0], curr_loc[1], time = t) 
+                              for curr_loc in non_wall_coords]))
+        # Viết convention cho ngắn, đại ý là kiểm tra vị trí duy nhất của pacman tại thời điểm t
+
+        # 3.
+        
+
+
     "*** END YOUR CODE HERE ***"
 
 #______________________________________________________________________________
@@ -754,6 +774,7 @@ def extractActionSequence(model: Dict[Expr, bool], actions: List) -> List:
             plan[time] = action
     #return list(filter(lambda x: x is not None, plan))
     return [x for x in plan if x is not None]
+    # Lười quá dell đọc, nma đề bài bảo là trả về danh sách cách hành động (action) từ lúc đầu đến cuối
 
 
 # Helpful Debug Method
