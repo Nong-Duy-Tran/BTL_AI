@@ -288,7 +288,7 @@ def aStarSearch(problem: SearchProblem, heuristic=nullHeuristic):
                     # print(real_current_cost)
                     # queue.push(successor)
                     # parent[successor] = node
-                    node_dict[successor_state] = real_cost
+                    node_dict[successor_state] = node_dict[state] + successor_cost # namhh: No heuristic because add heuristic is wrong
                     parent[successor[:2]] = node
 
     return []
