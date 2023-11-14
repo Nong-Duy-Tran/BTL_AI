@@ -269,6 +269,7 @@ class LocalizationLogicAgent(LocalizeMapAgent):
         south_iswall = self.problem.walls[x][y-1]
         east_iswall = self.problem.walls[x+1][y]
         west_iswall = self.problem.walls[x-1][y]
+        # Trả về hướng nào là tường, tường là 1, không phải thì là 0
         return [north_iswall, south_iswall, east_iswall, west_iswall]
 
     def getValidActions(self):

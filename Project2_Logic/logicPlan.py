@@ -28,6 +28,7 @@ from logic import PropSymbolExpr, Expr, to_cnf, pycoSAT, parseExpr, pl_true
 
 import itertools
 import copy
+import logicAgents
 
 pacman_str = 'P'
 food_str = 'FOOD'
@@ -584,6 +585,46 @@ def foodLogicPlan(problem) -> List:
 #______________________________________________________________________________
 # QUESTION 6
 
+def auxiliaryFunction1(KB : list, agent, t: int, all_coords: list, non_outer_wall_coords: list, walls_grid):
+    
+    KB.append(pacphysicsAxioms(t, all_coords, non_outer_wall_coords, walls_grid, sensorAxioms, allLegalSuccessorAxioms))
+    # Thêm vào KB tập các suy luận và mệnh đề trong pacphysicsAxioms
+
+    KB.append(PropSymbolExpr(agent.actions[t], time=t))
+    # Thêm vào hành động của pacman tại thời điểm t nhưng phải dùng agent.actions
+
+    percept_rules = fourBitPerceptRules(t, agent.getPercepts())
+    # Chuyển đổi nhận thức của pacman thành mệnh đề
+    KB.append(percept_rules)
+    # Truyền mệnh đề nhận thức (percept) của pacman vào trong KB
+
+    
+def auxiliaryFunction2(possible_locations: list, non_outer_wall_coords, KB: list, t: int):
+
+    for x,y in non_outer_wall_coords:
+        pacman_loc = PropSymbolExpr(pacman_str, x, y, time = t)
+        # Tạo mệnh đề xét vị trí pacman
+
+        cKB = conjoin(KB)
+        # Tách tập các mệnh đề ra để kiểm tra xem pacman có ở vị trí (x,y) hay không 
+
+        if (findModel(cKB & pacman_loc)):
+            # print('1'*15)
+            possible_locations.append((x, y))
+            # Kiểm tra xem nếu bất kì vị trí nào pacman có thể ở đấy thì ta cho vào list possible_locations
+        
+
+        # Chứng minh là pacman có thể/không thể ở vị trí (x,y) tại thời điểm t
+        elif (entails(cKB, pacman_loc)):
+            # print('2'*15)
+            KB.append(pacman_loc)
+
+        else:
+            # print('3'*15)
+            KB.append(~pacman_loc)
+
+
+
 def localization(problem, agent) -> Generator:
     '''
     problem: a LocalizationProblem instance
@@ -595,13 +636,27 @@ def localization(problem, agent) -> Generator:
     non_outer_wall_coords = list(itertools.product(range(1, problem.getWidth()+1), range(1, problem.getHeight()+1)))
 
     KB = []
-
+    
     "*** BEGIN YOUR CODE HERE ***"
-    util.raiseNotDefined()
-    possible_locations = []
+    # 1.
+    for coord in all_coords:
+        if coord in walls_list:
+            KB.append(PropSymbolExpr(wall_str, coord[0], coord[1]))
+            continue
+
+        KB.append(~PropSymbolExpr(wall_str, coord[0], coord[1]))
+    # Cho vào KB mệnh đề của cả map mô tả chỗ nào là tường, chỗ nào không
+    
     for t in range(agent.num_timesteps):
+        possible_locations = []
+        auxiliaryFunction1(KB, agent, t, all_coords, non_outer_wall_coords, walls_grid)
+    
+        auxiliaryFunction2(possible_locations, non_outer_wall_coords, KB, t)
+
+        agent.moveToNextState(agent.actions[t])
         "*** END YOUR CODE HERE ***"
         yield possible_locations
+
 
 #______________________________________________________________________________
 # QUESTION 7
@@ -629,7 +684,7 @@ def mapping(problem, agent) -> Generator:
     KB.append(conjoin(outer_wall_sent))
 
     "*** BEGIN YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    
 
     for t in range(agent.num_timesteps):
         "*** END YOUR CODE HERE ***"
@@ -725,6 +780,8 @@ def fourBitPerceptRules(t: int, percepts: List) -> Expr:
             percept_unit_clause = ~PropSymbolExpr(blocked_str_map[direction], time=t)
         percept_unit_clauses.append(percept_unit_clause) # The actual sensor readings
     return conjoin(percept_unit_clauses)
+    # Trả về chuẩn tắc hội của các mệnh đề nhận thức xung quang có tường hay không
+    # VD [North_blocked_1,...]
 
 
 def numAdjWallsPerceptRules(t: int, percepts: List) -> Expr:
