@@ -303,7 +303,7 @@ class CornersProblem(search.SearchProblem):
         Returns whether this search state is a goal state of the problem.
         """
         "*** YOUR CODE HERE ***"
-        print("isGoalState: ", state)
+        # print("isGoalState: ", state)
         return all(state[1])
 
     def getSuccessors(self, state: Any):
@@ -333,13 +333,13 @@ class CornersProblem(search.SearchProblem):
                         if successor_position == self.corners[index]:
                             successor_corner_state[index] = True
                 successor_corner_state = tuple(successor_corner_state)
-                print(successor_corner_state)
+                # print(successor_corner_state)
                 successors.append(((successor_position, successor_corner_state), action, 1))
 
             "*** YOUR CODE HERE ***"
 
         self._expanded += 1 # DO NOT CHANGE
-        print("Successors: ", successors)
+        # print("Successors: ", successors)
         return successors
 
     def getCostOfActions(self, actions):
