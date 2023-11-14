@@ -631,6 +631,7 @@ def localization(problem, agent) -> Generator:
     agent: a LocalizationLogicAgent instance
     '''
     walls_grid = problem.walls
+    print(walls_grid)
     walls_list = walls_grid.asList()
     all_coords = list(itertools.product(range(problem.getWidth()+2), range(problem.getHeight()+2)))
     non_outer_wall_coords = list(itertools.product(range(1, problem.getWidth()+1), range(1, problem.getHeight()+1)))
@@ -661,6 +662,27 @@ def localization(problem, agent) -> Generator:
 #______________________________________________________________________________
 # QUESTION 7
 
+def auxiliaryFunction3(non_outer_wall_coords: list, KB: list, known_map, t):
+    for x, y in non_outer_wall_coords:
+        wall_loc = PropSymbolExpr(wall_str, x, y)
+        cKB = conjoin(KB)
+
+        if (entails(cKB, wall_loc)):
+            known_map[x][y] = 1
+            KB.append(wall_loc)
+        # Nếu là tường thì update known_map
+
+        elif(entails(cKB, ~wall_loc)):
+            known_map[x][y] = 0
+            KB.append(~wall_loc)
+        # Không thì update không phải
+
+        else:
+            known_map[x][y] = -1
+        # Không biết thì để tí tính sau
+
+
+
 def mapping(problem, agent) -> Generator:
     '''
     problem: a MappingProblem instance
@@ -681,13 +703,31 @@ def mapping(problem, agent) -> Generator:
                 or (y == 0 or y == problem.getHeight() + 1)):
             known_map[x][y] = 1
             outer_wall_sent.append(PropSymbolExpr(wall_str, x, y))
-    KB.append(conjoin(outer_wall_sent))
 
+    KB.append(conjoin(outer_wall_sent))
+    # RẤT GIỐNG CÂU 6, CHẤP THẦY HỎI
+    print(known_map)
     "*** BEGIN YOUR CODE HERE ***"
-    
+    KB.append(PropSymbolExpr(pacman_str, pac_x_0, pac_y_0, time=0))
+    # Khởi tạo pacman
+
+
+    if (known_map[pac_x_0][pac_y_0] == 1):
+        KB.append(PropSymbolExpr(wall_str, pac_x_0, pac_y_0))
+    else:
+        KB.append(~PropSymbolExpr(wall_str, pac_x_0, pac_y_0))
+    # Kiểm tra vị pacman đứng ban đầu có phải tường hay không
+    # Xong thêm mệnh đề vào KB
 
     for t in range(agent.num_timesteps):
         "*** END YOUR CODE HERE ***"
+        auxiliaryFunction1(KB, agent, t, all_coords, non_outer_wall_coords, known_map)
+        # Tương tự câu 6
+
+        auxiliaryFunction3(non_outer_wall_coords, KB, known_map, t)
+        # Update Known_map và KB
+
+        agent.moveToNextState(agent.actions[t])
         yield known_map
 
 #______________________________________________________________________________
