@@ -376,16 +376,15 @@ def cornersHeuristic(state: Any, problem: CornersProblem):
     position = state[0]
     corners_visited = state[1]
     corners = state[2]
-    distance_list = []
-    for i in list(corners_visited):
+    heuristic = 0
+    for i in range(len(list(corners_visited))):
         if corners_visited[i] is False:
-            # heuristic = abs(position[0] - corners[i][0]) + abs(position[1] - corners[i][1]) # Manhattan distance
-            # Euclid distance
-            import math
-            heuristic = math.sqrt((position[0] - corners[i][0])**2 + (position[1] - corners[i][1])**2) 
+            heuristic = max(heuristic, abs(position[0] - corners[i][0]) + abs(position[1] - corners[i][1])) # Manhattan distance
+            # Euclid distance (not working perfectly)
+            # import math
+            # heuristic = math.sqrt((position[0] - corners[i][0])**2 + (position[1] - corners[i][1])**2) 
             
-            distance_list.append(heuristic)
-    return max(distance_list) if distance_list else 0
+    return heuristic
 
 class AStarCornersAgent(SearchAgent):
     "A SearchAgent for FoodSearchProblem using A* and your foodHeuristic"
