@@ -14,5 +14,7 @@ direction = 'North'
 dx, dy = DIR_TO_DXDY_MAP[direction]
 simpleExpr = PropSymbolExpr(wall_str+direction, x + dx, y + dy, time = 1)
 
-print(PropSymbolExpr(blocked_str_map[direction], time = 1))
+A = []
+A.append(PropSymbolExpr(food_str, x1, y1, time = 0) for x1, y1 in zip([1,2,3], [4,5,6]))
+print(A)
 

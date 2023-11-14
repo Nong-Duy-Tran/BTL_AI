@@ -530,8 +530,10 @@ def foodLogicPlan(problem) -> List:
     "*** BEGIN YOUR CODE HERE ***"
     KB.append(PropSymbolExpr(pacman_str, x0, y0, time = 0))
     # Khởi tạo pacman
-    KB.append(PropSymbolExpr(food_str, food_coords[0], food_coords[1], time = 0) for food_coords in food_coords)
+    for food_coord in food_coords:
+        KB.append(PropSymbolExpr(food_str, food_coord[0], food_coord[1], time = 0))
     # Thêm vào KB tất cả thức ăn tại mọi thời điểm
+    # Không dùng comprehension được là do nó sẽ trả về một generator
     
     for t in range(50):
          # 1.
@@ -541,8 +543,11 @@ def foodLogicPlan(problem) -> List:
                               for curr_loc in non_wall_coords]))
         
         # 3.
-        goal = [~PropSymbolExpr(pacman_str, food_coord[0], food_coord[1], time=t) for food_coord in food_coords]
-        model = findModel(goal & conjoin(KB))
+        goal = [~PropSymbolExpr(food_str, food_coord[0], food_coord[1], time=t) for food_coord in food_coords]
+        print(goal)
+        # Mục tiêu phải là thức ăn phải được ăn hết, cho vào list để kiểm tra xem nó bị ăn chưa
+        model = findModel(conjoin(KB + goal))
+        # goal và KB đều là list, phải cộng vào
         if (model):
             return extractActionSequence(model, actions)
         
