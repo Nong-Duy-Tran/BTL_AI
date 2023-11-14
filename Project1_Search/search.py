@@ -72,11 +72,6 @@ def tinyMazeSearch(problem):
     w = Directions.WEST
     return  [s, s, w, s, w, w, s, w]
 
-def buildActions(node, parent):
-    action = node[1]
-    if action is None: return []
-    return buildActions(parent[node], parent) + [action]
-
 def depthFirstSearch(problem: SearchProblem):
     """
     Search the deepest nodes in the search tree first.
@@ -103,7 +98,7 @@ def depthFirstSearch(problem: SearchProblem):
 
     while not stack.isEmpty():
         node = stack.pop()
-        print(node)
+        # print(node)
         state = node[0]
 
         if problem.isGoalState(state):
@@ -146,7 +141,7 @@ def breadthFirstSearch(problem: SearchProblem):
 
     while not stack.isEmpty():
         node = stack.pop()
-        print(node)
+        # print(node)
         state = node[0]
 
         if problem.isGoalState(state):
@@ -177,7 +172,56 @@ def breadthFirstSearch(problem: SearchProblem):
 def uniformCostSearch(problem: SearchProblem):
     """Search the node of least total cost first."""
     "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    queue = util.PriorityQueue()
+    parent = dict()
+    visited_node = set()
+    node_dict = dict() # namhh: For cost management
+
+    start_state = problem.getStartState()
+    # namhh: The problem.getSuccessors() return (SuccessorsState, SuccessorsAction, SuccessorsCost) so I applied for start state
+    # namhh: In PriorityQueue, this Queue is interested in lowest priority number.
+    queue.push(item = (start_state, None), priority=0)
+    node_dict[start_state] = 0
+
+    while not queue.isEmpty():
+        node = queue.pop()
+        # print(node)
+        state = node[0]
+
+        if problem.isGoalState(state):
+            # return []
+            # namhh Build path
+            node_action = node[1]
+            path = []
+            path.append(node[1])
+            while node_action is not None:
+                node_parent = parent[node]
+                path.append(node_parent[1])
+                node = node_parent
+                node_action = node_parent[1]
+            path.reverse()
+            return path[1:] # From 1 because path[0] is StartNodeAction and it's None
+
+            
+        if state not in visited_node:
+            visited_node.add(state)
+
+            for successor in problem.getSuccessors(state):
+                successor_state = successor[0]
+                successor_cost = successor[2]
+
+                if successor_state not in visited_node:
+                    # namhh: Update successor cost
+                    real_cost = node_dict[state] + successor_cost
+                    queue.push(item=successor[:2], priority=real_cost)
+                    # real_current_cost = node.priority + successor_cost
+                    # print(real_current_cost)
+                    # queue.push(successor)
+                    # parent[successor] = node
+                    node_dict[successor_state] = real_cost
+                    parent[successor[:2]] = node
+
+    return []
 
 def nullHeuristic(state, problem=None):
     """
@@ -189,7 +233,57 @@ def nullHeuristic(state, problem=None):
 def aStarSearch(problem: SearchProblem, heuristic=nullHeuristic):
     """Search the node that has the lowest combined cost and heuristic first."""
     "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    queue = util.PriorityQueue()
+    parent = dict()
+    visited_node = set()
+    node_dict = dict() # namhh: For cost management
+
+    start_state = problem.getStartState()
+    # namhh: The problem.getSuccessors() return (SuccessorsState, SuccessorsAction, SuccessorsCost) so I applied for start state
+    # namhh: In PriorityQueue, this Queue is interested in lowest priority number.
+    queue.push(item=(start_state, None), priority=0)
+    node_dict[start_state] = 0
+
+    while not queue.isEmpty():
+        node = queue.pop()
+        # print(node)
+        state = node[0]
+
+        if problem.isGoalState(state):
+            # return []
+            # namhh Build path
+            node_action = node[1]
+            path = []
+            path.append(node[1])
+            while node_action is not None:
+                node_parent = parent[node]
+                path.append(node_parent[1])
+                node = node_parent
+                node_action = node_parent[1]
+            path.reverse()
+            return path[1:] # From 1 because path[0] is StartNodeAction and it's None
+
+            
+        if state not in visited_node:
+            visited_node.add(state)
+
+            for successor in problem.getSuccessors(state):
+                successor_state = successor[0]
+                successor_cost = successor[2]
+
+                if successor_state not in visited_node:
+                    # namhh: Update successor cost
+                    real_cost = node_dict[state] + successor_cost + heuristic(successor_state, problem)
+                    # queue.push(item=successor[:2], priority=real_cost)
+                    queue.update(successor[:2], real_cost)
+                    # real_current_cost = node.priority + successor_cost
+                    # print(real_current_cost)
+                    # queue.push(successor)
+                    # parent[successor] = node
+                    node_dict[successor_state] = real_cost
+                    parent[successor[:2]] = node
+
+    return []
 
 
 # Abbreviations
