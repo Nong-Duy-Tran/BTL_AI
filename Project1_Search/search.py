@@ -134,7 +134,45 @@ def depthFirstSearch(problem: SearchProblem):
 def breadthFirstSearch(problem: SearchProblem):
     """Search the shallowest nodes in the search tree first."""
     "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    # namhh: The BFS algorithm is just different with DFS at data structures for pending nodes :D. Just change to Queue instead of Stack
+    stack = util.Queue()
+    parent = dict()
+    visited_node = set()
+
+    start_state = problem.getStartState()
+    # namhh: The problem.getSuccessors() return (SuccessorsState, SuccessorsAction, SuccessorsCost) so I applied for start state
+    start_node = (start_state, None, 0)
+    stack.push(start_node)
+
+    while not stack.isEmpty():
+        node = stack.pop()
+        print(node)
+        state = node[0]
+
+        if problem.isGoalState(state):
+            # namhh Build path
+            node_action = node[1]
+            path = []
+            path.append(node[1])
+            while node_action is not None:
+                node_parent = parent[node]
+                path.append(node_parent[1])
+                node = node_parent
+                node_action = node_parent[1]
+            path.reverse()
+            return path[1:] # From 1 because path[0] is StartNodeAction and it's None
+
+        if state not in visited_node:
+            visited_node.add(state)
+
+            for successor in problem.getSuccessors(state):
+                successor_state = successor[0]
+
+                if successor_state not in visited_node:
+                    stack.push(successor)
+                    parent[successor] = node
+
+    return []
 
 def uniformCostSearch(problem: SearchProblem):
     """Search the node of least total cost first."""
