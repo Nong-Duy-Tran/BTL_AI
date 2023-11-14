@@ -19,6 +19,7 @@ Pacman agents (in searchAgents.py).
 
 import util
 
+
 class SearchProblem:
     """
     This class outlines the structure of a search problem, but doesn't implement
@@ -70,7 +71,7 @@ def tinyMazeSearch(problem):
     from game import Directions
     s = Directions.SOUTH
     w = Directions.WEST
-    return  [s, s, w, s, w, w, s, w]
+    return [s, s, w, s, w, w, s, w]
 
 def depthFirstSearch(problem: SearchProblem):
     """
@@ -112,7 +113,7 @@ def depthFirstSearch(problem: SearchProblem):
                 node = node_parent
                 node_action = node_parent[1]
             path.reverse()
-            return path[1:] # From 1 because path[0] is StartNodeAction and it's None
+            return path[1:]  # From 1 because path[0] is StartNodeAction and it's None
 
         if state not in visited_node:
             visited_node.add(state)
@@ -125,6 +126,7 @@ def depthFirstSearch(problem: SearchProblem):
                     parent[successor] = node
 
     return []
+
 
 def breadthFirstSearch(problem: SearchProblem):
     """Search the shallowest nodes in the search tree first."""
@@ -155,7 +157,7 @@ def breadthFirstSearch(problem: SearchProblem):
                 node = node_parent
                 node_action = node_parent[1]
             path.reverse()
-            return path[1:] # From 1 because path[0] is StartNodeAction and it's None
+            return path[1:]  # From 1 because path[0] is StartNodeAction and it's None
 
         if state not in visited_node:
             visited_node.add(state)
@@ -169,59 +171,64 @@ def breadthFirstSearch(problem: SearchProblem):
 
     return []
 
+
 def uniformCostSearch(problem: SearchProblem):
-    """Search the node of least total cost first."""
-    "*** YOUR CODE HERE ***"
-    queue = util.PriorityQueue()
-    parent = dict()
-    visited_node = set()
-    node_dict = dict() # namhh: For cost management
+    """ Search the node of the least total cost first. """
 
-    start_state = problem.getStartState()
-    # namhh: The problem.getSuccessors() return (SuccessorsState, SuccessorsAction, SuccessorsCost) so I applied for start state
-    # namhh: In PriorityQueue, this Queue is interested in lowest priority number.
-    queue.push(item = (start_state, None), priority=0)
-    node_dict[start_state] = 0
+    # Tạo một hàng đợi ưu tiên để lưu trữ các nút cần khám phá
+    priorityQueue = util.PriorityQueue()
+    # Tạo một tập để lưu trữ các nút đã được khám phá
+    visited = set()
+    # Khởi tạo đường dẫn hiện tại và trạng thái hiện tại
+    currentPath = []
+    currentState = problem.getStartState()
+    # Thêm nút bắt đầu vào hàng đợi ưu tiên
+    priorityQueue.push((currentState, currentPath), 0)
 
-    while not queue.isEmpty():
-        node = queue.pop()
-        # print(node)
-        state = node[0]
+    while not priorityQueue.isEmpty():
+        # Lấy nút có tổng chi phí thấp nhất khỏi hàng đợi ưu tiên
+        currentState, currentPath = priorityQueue.pop()
+        # Nếu nút hiện tại là nút đích, trả về đường dẫn đến nút đó
+        if problem.isGoalState(currentState):
+            return currentPath
+        # Đánh dấu nút hiện tại là đã được khám phá
+        visited.add(currentState)
 
-        if problem.isGoalState(state):
-            # return []
-            # namhh Build path
-            node_action = node[1]
-            path = []
-            path.append(node[1])
-            while node_action is not None:
-                node_parent = parent[node]
-                path.append(node_parent[1])
-                node = node_parent
-                node_action = node_parent[1]
-            path.reverse()
-            return path[1:] # From 1 because path[0] is StartNodeAction and it's None
+        # Tạo một danh sách chứa các trạng thái của các nút nằm trong hàng đợi ưu tiên
+        frontierStates = []
+        for i in priorityQueue.heap:
+            frontierStates.append(i[2][0])
 
-            
-        if state not in visited_node:
-            visited_node.add(state)
-
-            for successor in problem.getSuccessors(state):
-                successor_state = successor[0]
-                successor_cost = successor[2]
-
-                if successor_state not in visited_node:
-                    # namhh: Update successor cost
-                    real_cost = node_dict[state] + successor_cost
-                    queue.push(item=successor[:2], priority=real_cost)
-                    # real_current_cost = node.priority + successor_cost
-                    # print(real_current_cost)
-                    # queue.push(successor)
-                    # parent[successor] = node
-                    node_dict[successor_state] = real_cost
-                    parent[successor[:2]] = node
-
+        # Duyệt qua tất cả các nút kế thừa của nút hiện tại
+        for successor in problem.getSuccessors(currentState):
+            # Tạo đường dẫn đến nút kế thừa mới
+            successorPath = currentPath + [successor[1]]
+            # Nếu nút kế thừa chưa được khám phá và chưa có trong hàng đợi ưu tiên
+            if successor[0] not in visited and successor[0] not in frontierStates:
+                # Thêm nút kế thừa vào hàng đợi ưu tiên
+                priorityQueue.push((successor[0], successorPath), problem.getCostOfActions(successorPath))
+            # Nếu nút kế thừa đã có trong hàng đợi ưu tiên
+            else:
+                # Tìm nút kế thừa trong hàng đợi ưu tiên
+                for i in range(0, len(frontierStates)):
+                    if successor[0] == frontierStates[i]:
+                        # Lấy tổng chi phí của đường dẫn hiện tại đến nút kế thừa
+                        storedCost = priorityQueue.heap[i][0]
+                        # Lấy tổng chi phí của đường dẫn mới đến nút kế thừa
+                        updatedCost = problem.getCostOfActions(successorPath)
+                        # Nếu tổng chi phí của đường dẫn mới đến nút kế thừa nhỏ hơn tổng chi phí của đường dẫn hiện tại
+                        if storedCost > updatedCost:
+                            # Cập nhật tổng chi phí của nút kế thừa trong hàng đợi ưu tiên
+                            priorityQueue.update((successor[0], successorPath), updatedCost)
+    # Nếu không tìm thấy đường dẫn đến nút đích, trả về rỗng
     return []
+def nullHeuristic(state, problem=None):
+    """
+    A heuristic function estimates the cost from the current state to the nearest
+    goal in the provided SearchProblem.  This heuristic is trivial.
+    """
+    return 0
+
 
 def nullHeuristic(state, problem=None):
     """
@@ -229,6 +236,7 @@ def nullHeuristic(state, problem=None):
     goal in the provided SearchProblem.  This heuristic is trivial.
     """
     return 0
+
 
 def aStarSearch(problem: SearchProblem, heuristic=nullHeuristic):
     """Search the node that has the lowest combined cost and heuristic first."""
