@@ -306,7 +306,7 @@ class CornersProblem(search.SearchProblem):
         space)
         """
         "*** YOUR CODE HERE ***"
-        return (self.startingPosition, tuple(self.startingPosition == corner for corner in self.corners))
+        return (self.startingPosition, tuple(self.startingPosition == corner for corner in self.corners), self.corners)
 
     def isGoalState(self, state: Any):
         """
@@ -344,7 +344,7 @@ class CornersProblem(search.SearchProblem):
                             successor_corner_state[index] = True
                 successor_corner_state = tuple(successor_corner_state)
                 # print(successor_corner_state)
-                successors.append(((successor_position, successor_corner_state), action, 1))
+                successors.append(((successor_position, successor_corner_state, self.corners), action, 1))
 
             "*** YOUR CODE HERE ***"
 
@@ -383,8 +383,19 @@ def cornersHeuristic(state: Any, problem: CornersProblem):
     walls = problem.walls  # These are the walls of the maze, as a Grid (game.py)
 
     "*** YOUR CODE HERE ***"
-    return 0  # Default to trivial solution
 
+    position = state[0]
+    corners_visited = state[1]
+    corners = state[2]
+    heuristic = 0
+    for i in range(len(list(corners_visited))):
+        if corners_visited[i] is False:
+            heuristic = max(heuristic, abs(position[0] - corners[i][0]) + abs(position[1] - corners[i][1])) # Manhattan distance
+            # Euclid distance (not working perfectly)
+            # import math
+            # heuristic = math.sqrt((position[0] - corners[i][0])**2 + (position[1] - corners[i][1])**2) 
+            
+    return heuristic
 
 class AStarCornersAgent(SearchAgent):
     "A SearchAgent for FoodSearchProblem using A* and your foodHeuristic"
