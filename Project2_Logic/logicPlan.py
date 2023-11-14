@@ -210,6 +210,7 @@ def pacmanSuccessorAxiomSingle(x: int, y: int, time: int, walls_grid: List[List[
 
     '''
     Cách đánh tọa độ của của map
+    NHẤN MẠNH LÀ CỦA TOÀN BỘ MAP
     y ^
       |
       |
@@ -494,7 +495,7 @@ def positionLogicPlan(problem) -> List:
         for curr_loc in non_wall_coords:
             KB.append(pacmanSuccessorAxiomSingle(curr_loc[0],curr_loc[1],t+1,walls_grid))
         # Méo hiểu sao không dùng được comprehension :))))
-        # Đề bài yêu cầu xét hêt tất cả suy luận vị trí của tất cả các điểm mà của pacman ở trên bản đồ
+        # Đúng ra là xét hết suy luận của tất cả các vị trí mà pacman có thể ở trên bản đồ, vì nó xét trong time = t+1
 
 
     "*** END YOUR CODE HERE ***"
@@ -510,22 +511,69 @@ def foodLogicPlan(problem) -> List:
     Note that STOP is not an available action.
     Overview: add knowledge incrementally, and query for a model each timestep. Do NOT use pacphysicsAxioms.
     """
-    walls = problem.walls
+    walls_grid = problem.walls
     width, height = problem.getWidth(), problem.getHeight()
-    walls_list = walls.asList()
+    walls_list = walls_grid.asList()
     (x0, y0), food = problem.start
-    food = food.asList()
+    food_coords = food.asList()
 
     # Get lists of possible locations (i.e. without walls) and possible actions
     all_coords = list(itertools.product(range(width + 2), range(height + 2)))
 
     non_wall_coords = [loc for loc in all_coords if loc not in walls_list]
-    actions = [ 'North', 'South', 'East', 'West' ]
+    actions = ['North', 'South', 'East', 'West']
 
     KB = []
 
+    # Lưu ý là nó RẤT giống câu 4, chỉ thêm một vài tiêu chí khác
+
     "*** BEGIN YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    KB.append(PropSymbolExpr(pacman_str, x0, y0, time = 0))
+    # Khởi tạo pacman
+    KB.append(PropSymbolExpr(food_str, food_coords[0], food_coords[1], time = 0) for food_coords in food_coords)
+    # Thêm vào KB tất cả thức ăn tại mọi thời điểm
+    
+    for t in range(50):
+         # 1.
+        print("time step =", t)
+        # 2.
+        KB.append(exactlyOne([PropSymbolExpr(pacman_str, curr_loc[0], curr_loc[1], time = t) 
+                              for curr_loc in non_wall_coords]))
+        
+        # 3.
+        goal = [~PropSymbolExpr(pacman_str, food_coord[0], food_coord[1], time=t) for food_coord in food_coords]
+        model = findModel(goal & conjoin(KB))
+        if (model):
+            return extractActionSequence(model, actions)
+        
+        # 4.
+        KB.append(exactlyOne([PropSymbolExpr(action, time = t) for action in actions]))
+
+        # 5.
+        for curr_loc in non_wall_coords:
+            KB.append(pacmanSuccessorAxiomSingle(curr_loc[0],curr_loc[1],t+1,walls_grid))
+        
+        # 6.
+        for food_coord in food_coords:
+            new_t_food = PropSymbolExpr(food_str, food_coord[0], food_coord[1], time = t+1)
+            food_loc = PropSymbolExpr(food_str, food_coord[0], food_coord[1], time = t)
+            pacman_loc = PropSymbolExpr(pacman_str, food_coord[0], food_coord[1], time = t)
+            # Khởi tạo mệnh đề của Food[x,y]_t+1 and Food[x,y]_t and Pacman[x,y]_t
+
+            get_food = pacman_loc & food_loc
+            avoid_food = ~pacman_loc & food_loc
+            # Mối quan hệ khá đơn giản và hiển nhiên, không giải thích
+
+            # Đề bài yêu cầu nó giống như "transition model"
+            # => có vẻ nó tạo suy luận giống như pacmanSuccessorAxiomSingle()
+
+            # Ý tưởng: nếu ăn thằng này tại time = t thì sẽ không còn thằng này tại time = t+1,
+            # do food có tọa độ giống hệt nhau và không được làm mới
+            still_have_food = avoid_food >> new_t_food
+            already_eat = get_food >> ~new_t_food
+            KB.append(still_have_food)
+            KB.append(already_eat)
+        
     "*** END YOUR CODE HERE ***"
 
 #______________________________________________________________________________
