@@ -585,17 +585,20 @@ def foodLogicPlan(problem) -> List:
 #______________________________________________________________________________
 # QUESTION 6
 
-def auxiliaryFunction1(KB : list, agent, t: int, all_coords: list, non_outer_wall_coords: list, walls_grid):
+def auxiliaryFunction1(KB : list, agent, t: int, all_coords: list, non_outer_wall_coords: list, walls_grid, sensor_mode, successorAxioms, question = 6):
     
-    KB.append(pacphysicsAxioms(t, all_coords, non_outer_wall_coords, walls_grid, sensorAxioms, allLegalSuccessorAxioms))
+    KB.append(pacphysicsAxioms(t, all_coords, non_outer_wall_coords, walls_grid, sensor_mode, successorAxioms))
     # Thêm vào KB tập các suy luận và mệnh đề trong pacphysicsAxioms
 
     KB.append(PropSymbolExpr(agent.actions[t], time=t))
     # Thêm vào hành động của pacman tại thời điểm t nhưng phải dùng agent.actions
-
-    percept_rules = fourBitPerceptRules(t, agent.getPercepts())
-    # Chuyển đổi nhận thức của pacman thành mệnh đề
-    KB.append(percept_rules)
+    if question != 8:
+        percept_rules = fourBitPerceptRules(t, agent.getPercepts())
+        # Chuyển đổi nhận thức của pacman thành mệnh đề
+        KB.append(percept_rules)
+    
+    else :
+        KB.append(numAdjWallsPerceptRules(t, agent.getPercepts()))
     # Truyền mệnh đề nhận thức (percept) của pacman vào trong KB
 
     
@@ -650,7 +653,7 @@ def localization(problem, agent) -> Generator:
     
     for t in range(agent.num_timesteps):
         possible_locations = []
-        auxiliaryFunction1(KB, agent, t, all_coords, non_outer_wall_coords, walls_grid)
+        auxiliaryFunction1(KB, agent, t, all_coords, non_outer_wall_coords, walls_grid, sensorAxioms, allLegalSuccessorAxioms)
     
         auxiliaryFunction2(possible_locations, non_outer_wall_coords, KB, t)
 
@@ -721,7 +724,7 @@ def mapping(problem, agent) -> Generator:
 
     for t in range(agent.num_timesteps):
         "*** END YOUR CODE HERE ***"
-        auxiliaryFunction1(KB, agent, t, all_coords, non_outer_wall_coords, known_map)
+        auxiliaryFunction1(KB, agent, t, all_coords, non_outer_wall_coords, known_map, sensorAxioms, allLegalSuccessorAxioms)
         # Tương tự câu 6
 
         auxiliaryFunction3(non_outer_wall_coords, KB, known_map, t)
@@ -753,13 +756,24 @@ def slam(problem, agent) -> Generator:
                 or (y == 0 or y == problem.getHeight() + 1)):
             known_map[x][y] = 1
             outer_wall_sent.append(PropSymbolExpr(wall_str, x, y))
+    
     KB.append(conjoin(outer_wall_sent))
 
     "*** BEGIN YOUR CODE HERE ***"
-    util.raiseNotDefined()
-    possible_locations = []
+    KB.append(PropSymbolExpr(pacman_str, pac_x_0, pac_y_0, time=0))
+    # Khởi tạo pacman
+    
+    
     for t in range(agent.num_timesteps):
+        possible_locations = []
         "*** END YOUR CODE HERE ***"
+        auxiliaryFunction1(KB, agent, t, all_coords, non_outer_wall_coords, known_map, SLAMSensorAxioms, SLAMSuccessorAxioms, 8)
+
+        auxiliaryFunction2(possible_locations, non_outer_wall_coords, KB, t)
+
+        auxiliaryFunction3(non_outer_wall_coords, KB, known_map, t)
+
+        agent.moveToNextState(agent.actions[t])
         yield (known_map, possible_locations)
 
 
