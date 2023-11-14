@@ -48,7 +48,7 @@ class PerceptronModel(object):
         """
         "*** YOUR CODE HERE ***"
         batch_size = 1
-        n_iter = 100
+        n_iter = 500
         for i in range(n_iter):
             count_miss = 0
             for x,y in dataset.iterate_once(batch_size):
