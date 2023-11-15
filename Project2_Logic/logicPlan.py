@@ -127,7 +127,7 @@ def entails(premise: Expr, conclusion: Expr) -> bool:
     """Returns True if the premise entails the conclusion and False otherwise.
     """
     "*** BEGIN YOUR CODE HERE ***"
-    result = ~conclusion & premise
+    result = premise & ~conclusion
     
     if (findModel(result) == False):
         return True
@@ -420,13 +420,17 @@ def checkLocationSatisfiability(x1_y1: Tuple[int, int], x0_y0: Tuple[int, int], 
     KB.append(conjoin(map_sent))
 
     "*** BEGIN YOUR CODE HERE ***"
+    # 1.
     KB.append(pacphysicsAxioms(0, all_coords, non_outer_wall_coords, walls_grid, successorAxioms=allLegalSuccessorAxioms)) # Truyền vào hàm là do nó có dạng Callable
     KB.append(pacphysicsAxioms(1, all_coords, non_outer_wall_coords, walls_grid, successorAxioms=allLegalSuccessorAxioms))
 
+    # 2.
     KB.append(PropSymbolExpr(pacman_str, x0, y0, time=0))
 
+    # 3.
     KB.append(PropSymbolExpr(action0, time=0))
     KB.append(PropSymbolExpr(action1, time=1))
+
 
     check = PropSymbolExpr(pacman_str, x1, y1, time=1)
     # Do đề bài yêu cầu kiểm tra tại thời điểm time = 1 là thằng pacman có ở đấy không
@@ -451,9 +455,10 @@ def positionLogicPlan(problem) -> List:
     Overview: add knowledge incrementally, and query for a model each timestep. Do NOT use pacphysicsAxioms.
     """
     walls_grid = problem.walls
+    print(walls_grid)
     width, height = problem.getWidth(), problem.getHeight()
     walls_list = walls_grid.asList()
-
+    
     # problem <- LocMapProblem (logicAgents.py) <- GameState (pacman.py)
     x0, y0 = problem.startState
     # Vị trí khởi tạo
@@ -473,6 +478,7 @@ def positionLogicPlan(problem) -> List:
 
     "*** BEGIN YOUR CODE HERE ***"
     KB.append(logic.PropSymbolExpr(pacman_str,x0,y0,time= 0))
+
     for t in range(50):
         # 1.
         print("time step =", t)
